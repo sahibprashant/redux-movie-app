@@ -6,18 +6,18 @@ const initialState = {
     movies: {},
     shows: {},
     selectedmovieShow: {},
+    fetching: false,
+    hasData: false,
 };
 
-export const fetchMovies = createAsyncThunk("movies/fetchMovies", async () => {
-    const movieText = "Harry";
-    const resp = await movieApi.get(`?apikey=${ApiKey}&s=${movieText}&t=movie`);
+export const fetchMovies = createAsyncThunk("movies/fetchMovies", async (term) => {
+    const resp = await movieApi.get(`?apikey=${ApiKey}&s=${term}&t=movie`);
     // console.log(resp.data);
     return resp.data;
 });
 
-export const fetchShows = createAsyncThunk("movies/fetchShows", async () => {
-    const seriesText = "Friends";
-    const resp = await movieApi.get(`?apikey=${ApiKey}&s=${seriesText}&t=series`);
+export const fetchShows = createAsyncThunk("movies/fetchShows", async (term) => {
+    const resp = await movieApi.get(`?apikey=${ApiKey}&s=${term}&t=series`);
     return resp.data;
 });
 
@@ -35,12 +35,17 @@ const movieSlice = createSlice({
         }
     },
     extraReducers: (builder) => {
-        builder.addCase(fetchMovies.pending, () => {
-            console.log("fetch pending");
+        builder.addCase(fetchMovies.pending, (state) => {
+            state.fetching = true;
+        }).addCase(fetchShows.pending, (state) => {
+            state.fetching = true;
         }).addCase(fetchMovies.fulfilled, (state, action) => {
+            state.fetching = false;
+            state.hasData = true;
             state.movies = action.payload;
         }).addCase(fetchShows.fulfilled, (state, action) => {
-            // console.log("fetch fulfilled", action.payload.payload);
+            state.fetching = false;
+            state.hasData = true;
             state.shows = action.payload;
         }).addCase(fetchMovieShowDetail.fulfilled, (state, action) => {
             // console.log("fetch fulfilled", action.payload.payload);
@@ -50,6 +55,8 @@ const movieSlice = createSlice({
 });
 
 export const { removeSelectedMovieShow } = movieSlice.actions;
+export const isFetchingData = (state) => state.movies.fetching;
+export const hasFetchedData = (state) => state.movies.hasData;
 export const getAllMovies = (state) => state.movies.movies;
 export const getAllShows = (state) => state.movies.shows;
 export const getMovieShowDetail = (state) => state.movies.selectedmovieShow;
